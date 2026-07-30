@@ -57,6 +57,12 @@ let examSeconds = 0;
 // Gamification State
 let totalXP = parseInt(localStorage.getItem('jpd_xp') || '0');
 let achievements = JSON.parse(localStorage.getItem('jpd_achievements') || '[]');
+let questionStats = JSON.parse(localStorage.getItem('jpd_question_stats') || '{}');
+
+function saveQuestionStats() {
+    localStorage.setItem('jpd_question_stats', JSON.stringify(questionStats));
+}
+
 const ALL_ACHIEVEMENTS = [
     { id: 'night_owl', icon: '🦉', title: 'Cú Đêm', desc: 'Học bài trong khoảng từ 00:00 đến 04:00 sáng.' },
     { id: 'immortal', icon: '🛡️', title: 'Bất Tử', desc: 'Đạt 10/10 điểm trong bài thi thử FE.' },
@@ -171,8 +177,28 @@ function startPractice(target) {
         // Clone the questions to avoid mutating original db
         currentQuestions = [...db.questions[target]];
     }
-    // Shuffle questions
-    currentQuestions.sort(() => Math.random() - 0.5);
+    
+    // Adaptive Learning Sort (Spaced Repetition)
+    currentQuestions.sort((a, b) => {
+        const statA = questionStats[a.id] || { attempts: 0, correct: 0, lastSeen: 0 };
+        const statB = questionStats[b.id] || { attempts: 0, correct: 0, lastSeen: 0 };
+        
+        const getWeight = (stat) => {
+            if (stat.attempts === 0) return 100; // Unseen gets highest priority
+            const accuracy = stat.correct / stat.attempts;
+            let weight = (1 - accuracy) * 80;
+            
+            const daysSinceSeen = (Date.now() - stat.lastSeen) / (1000 * 60 * 60 * 24);
+            weight += Math.min(daysSinceSeen * 2, 20); // Max +20 weight for old questions
+            
+            return weight;
+        };
+        
+        const weightA = getWeight(statA) + (Math.random() * 20); // Add jitter for randomness
+        const weightB = getWeight(statB) + (Math.random() * 20);
+        
+        return weightB - weightA; // Sort descending (highest weight first)
+    });
     
     currentQuestionIndex = 0;
     userAnswers = new Map();
@@ -324,6 +350,17 @@ function handleNextAction() {
             ans.checked = true;
             const isCorrect = (ans.selected === currentQ.answer);
             ans.correct = isCorrect;
+            
+            // Update stats
+            if (!questionStats[currentQ.id]) {
+                questionStats[currentQ.id] = { attempts: 0, correct: 0, lastSeen: 0 };
+            }
+            questionStats[currentQ.id].attempts += 1;
+            if (isCorrect) {
+                questionStats[currentQ.id].correct += 1;
+            }
+            questionStats[currentQ.id].lastSeen = Date.now();
+            saveQuestionStats();
             
             const selectedEl = document.querySelector('.option-card.selected');
             const correctEl = document.querySelector(`.option-card[data-key="${currentQ.answer}"]`);
@@ -625,6 +662,66 @@ function askGeminiNotebook(qId, prompt) {
     }).catch(err => {
         alert('Không thể copy vào clipboard. Lỗi trình duyệt: ' + err);
     });
+}
+
+function exportMetadata() {
+    let md = `# Thống kê Học tập JPD123\nNgày xuất báo cáo: ${new Date().toLocaleString()}\n\n`;
+    
+    md += `## 1. Tổng quan\n`;
+    md += `- Cấp độ hiện tại: ${getLevel(totalXP).level} (${getLevelTitle(getLevel(totalXP).level)})\n`;
+    md += `- Tổng XP: ${totalXP}\n`;
+    md += `- Tổng số câu đã tương tác: ${Object.keys(questionStats).length}\n\n`;
+    
+    let weakQuestions = [];
+    let masteredQuestions = [];
+    
+    // Create a lookup for all questions across all targets
+    const allQuestions = [];
+    for (const key in db.questions) {
+        allQuestions.push(...db.questions[key]);
+    }
+    
+    for (const [qId, stat] of Object.entries(questionStats)) {
+        if (stat.attempts > 0) {
+            const acc = stat.correct / stat.attempts;
+            const qObj = allQuestions.find(q => q.id === qId);
+            if (qObj) {
+                if (acc <= 0.5 && stat.attempts >= 2) {
+                    weakQuestions.push({ q: qObj, stat });
+                } else if (acc >= 0.8 && stat.attempts >= 3) {
+                    masteredQuestions.push({ q: qObj, stat });
+                }
+            }
+        }
+    }
+    
+    md += `## 2. Điểm yếu cần khắc phục (Sai nhiều lần)\n`;
+    md += `*Gửi AI: Hãy phân tích các câu dưới đây, tìm ra điểm yếu ngữ pháp/từ vựng chung của tôi và tạo thêm bài giảng để tôi ôn tập.*\n\n`;
+    if (weakQuestions.length === 0) md += `- Trống (Chưa có dữ liệu hoặc bạn làm rất tốt!)\n`;
+    
+    weakQuestions.sort((a,b) => (a.stat.correct/a.stat.attempts) - (b.stat.correct/b.stat.attempts)).slice(0, 20).forEach(item => {
+        md += `### ${item.q.id}\n`;
+        md += `- Câu hỏi: ${item.q.text.replace(/\n/g, ' ')}\n`;
+        md += `- Tỉ lệ đúng: ${item.stat.correct}/${item.stat.attempts} (${Math.round((item.stat.correct/item.stat.attempts)*100)}%)\n\n`;
+    });
+    
+    md += `\n## 3. Câu hỏi đã thành thạo\n`;
+    md += `*Gửi AI: Có thể bỏ qua giải thích cho các câu này vì tôi đã nắm vững.*\n\n`;
+    if (masteredQuestions.length === 0) md += `- Trống\n`;
+    masteredQuestions.forEach(item => {
+        md += `- ${item.q.id} (Tỉ lệ: ${Math.round((item.stat.correct/item.stat.attempts)*100)}%)\n`;
+    });
+    
+    // Trigger download
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `JPD123_Learning_Profile_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 // --- Audio & Effects ---
