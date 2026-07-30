@@ -15,6 +15,7 @@ const theoryView = document.getElementById('theory-view');
 const quizView = document.getElementById('quiz-view');
 const resultView = document.getElementById('result-view');
 const profileView = document.getElementById('profile-view');
+const statsView = document.getElementById('stats-view');
 
 // Quiz DOM
 const qTitle = document.getElementById('q-title');
@@ -128,6 +129,7 @@ function hideAllViews() {
     quizView.classList.add('hidden');
     resultView.classList.add('hidden');
     profileView.classList.add('hidden');
+    statsView.classList.add('hidden');
     examTimerContainer.classList.add('hidden');
     stopTimer();
 }
@@ -152,6 +154,10 @@ function handleNavigation(view, target, titleText) {
         currentMode = 'profile';
         profileView.classList.remove('hidden');
         renderProfile();
+    } else if (target === 'stats') {
+        hideAllViews();
+        statsView.classList.remove('hidden');
+        renderStats();
     }
 }
 
@@ -646,6 +652,71 @@ function saveNotebookUrl() {
         const msg = document.getElementById('notebook-url-msg');
         msg.style.display = 'block';
         setTimeout(() => msg.style.display = 'none', 3000);
+    }
+}
+
+function renderStats() {
+    const allQuestions = [];
+    for (const key in db.questions) {
+        allQuestions.push(...db.questions[key]);
+    }
+    const totalQ = allQuestions.length;
+    
+    let totalAttempts = 0;
+    let totalCorrect = 0;
+    let seenCount = 0;
+    let masteredCount = 0;
+    let weakList = [];
+    
+    for (const [qId, stat] of Object.entries(questionStats)) {
+        if (stat.attempts > 0) {
+            seenCount++;
+            totalAttempts += stat.attempts;
+            totalCorrect += stat.correct;
+            
+            const acc = stat.correct / stat.attempts;
+            const qObj = allQuestions.find(q => q.id === qId);
+            
+            if (qObj) {
+                if (acc >= 0.8 && stat.attempts >= 3) {
+                    masteredCount++;
+                } else if (acc <= 0.5 && stat.attempts >= 1) {
+                    weakList.push({ q: qObj, stat, acc });
+                }
+            }
+        }
+    }
+    
+    const overallAcc = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+    const coverage = Math.round((seenCount / totalQ) * 100);
+    
+    document.getElementById('stat-total-seen').innerText = `${seenCount} / ${totalQ}`;
+    document.getElementById('stat-accuracy').innerText = `${overallAcc}%`;
+    document.getElementById('stat-mastered').innerText = masteredCount;
+    document.getElementById('stat-weak').innerText = weakList.length;
+    
+    document.getElementById('coverage-bar').style.width = `${coverage}%`;
+    document.getElementById('coverage-text').innerText = `${coverage}% hoàn thành`;
+    
+    const weakListEl = document.getElementById('weak-questions-list');
+    weakListEl.innerHTML = '';
+    
+    if (weakList.length === 0) {
+        weakListEl.innerHTML = '<p style="color:var(--text-muted); font-style:italic">Tuyệt vời! Hiện tại bạn không có câu nào bị đánh giá là yếu kém.</p>';
+    } else {
+        weakList.sort((a,b) => a.acc - b.acc).slice(0, 10).forEach((item, index) => {
+            const accPercent = Math.round(item.acc * 100);
+            weakListEl.innerHTML += `
+                <div class="weak-item">
+                    <h4>Top ${index + 1}: ${item.q.id}</h4>
+                    <p style="margin-bottom:10px">${item.q.text.replace(/\n/g, '<br>')}</p>
+                    <div class="weak-stats">
+                        <span>Số lần chọn: ${item.stat.attempts}</span>
+                        <span class="weak-accuracy">Tỉ lệ đúng: ${accPercent}%</span>
+                    </div>
+                </div>
+            `;
+        });
     }
 }
 

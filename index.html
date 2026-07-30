@@ -215,6 +215,51 @@
                     </div>
                 </div>
                 
+                <!-- Statistics View -->
+                <div id="stats-view" class="view hidden">
+                    <h2 class="section-title">Bảng Thống Kê Học Tập</h2>
+                    
+                    <div class="stats-overview">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="color: var(--primary)"><i class="fa-solid fa-book-open"></i></div>
+                            <div class="stat-value" id="stat-total-seen">0 / 203</div>
+                            <div class="stat-label">Số câu đã học</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="color: #3498db"><i class="fa-solid fa-bullseye"></i></div>
+                            <div class="stat-value" id="stat-accuracy">0%</div>
+                            <div class="stat-label">Tỉ lệ chính xác</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="color: var(--success)"><i class="fa-solid fa-check-double"></i></div>
+                            <div class="stat-value" id="stat-mastered">0</div>
+                            <div class="stat-label">Câu thành thạo</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="color: var(--wrong)"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="stat-value" id="stat-weak">0</div>
+                            <div class="stat-label">Cần cải thiện</div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section" style="margin-top: 30px;">
+                        <h3 class="achievements-title">Tiến độ bao phủ (Coverage)</h3>
+                        <div class="progress-container" style="height: 20px; border-radius: 10px; margin-top: 15px;">
+                            <div id="coverage-bar" class="progress-fill" style="width: 0%; border-radius: 10px;"></div>
+                        </div>
+                        <p id="coverage-text" style="text-align: right; font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;">0%</p>
+                    </div>
+                    
+                    <div class="settings-section" style="margin-top: 30px;">
+                        <h3 class="achievements-title" style="color: var(--wrong);"><i class="fa-solid fa-bug"></i> Lỗ hổng kiến thức (Hay sai nhất)</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px; margin-bottom: 15px;">Danh sách các câu hỏi bạn có tỉ lệ trả lời đúng thấp nhất (cần ưu tiên ôn tập).</p>
+                        
+                        <div id="weak-questions-list" class="weak-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Welcome View -->
                 <div id="welcome-view" class="view-section">
                     <div class="welcome-card">
