@@ -152,9 +152,11 @@ function handleNavigation(view, target, titleText) {
         startExam(target);
     } else if (view === 'profile') {
         currentMode = 'profile';
+        hideAllViews();
         profileView.classList.remove('hidden');
         renderProfile();
-    } else if (target === 'stats') {
+    } else if (view === 'stats') {
+        currentMode = 'stats';
         hideAllViews();
         statsView.classList.remove('hidden');
         renderStats();
