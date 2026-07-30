@@ -181,6 +181,9 @@ function startPractice(target) {
         for (let key in db.questions) {
             currentQuestions = currentQuestions.concat(db.questions[key]);
         }
+        for (let key in db.fe) {
+            currentQuestions = currentQuestions.concat(db.fe[key]);
+        }
     } else {
         // Clone the questions to avoid mutating original db
         currentQuestions = [...db.questions[target]];
@@ -499,15 +502,26 @@ function submitExam() {
     isExamSubmitted = true;
     stopTimer();
     
-    // Calculate Score
-    let correctCount = 0;
+    let correct = 0;
     let wrongCount = 0;
     let reviewHTML = '';
     
     currentQuestions.forEach((q, idx) => {
         const ans = userAnswers.get(q);
-        if (ans && ans.selected === q.answer) {
-            correctCount++;
+        const isCorrect = ans && ans.selected === q.answer;
+        
+        // Update stats for Spaced Repetition & Dashboard
+        if (!questionStats[q.id]) {
+            questionStats[q.id] = { attempts: 0, correct: 0, lastSeen: 0 };
+        }
+        questionStats[q.id].attempts += 1;
+        if (isCorrect) {
+            questionStats[q.id].correct += 1;
+        }
+        questionStats[q.id].lastSeen = Date.now();
+        
+        if (isCorrect) {
+            correct++;
         } else {
             wrongCount++;
             // Generate review snippet
@@ -531,13 +545,13 @@ function submitExam() {
         }
     });
     
-    const finalScore = ((correctCount / currentQuestions.length) * 10).toFixed(1);
+    const finalScore = ((correct / currentQuestions.length) * 10).toFixed(1);
     
     quizView.classList.add('hidden');
     resultView.classList.remove('hidden');
     
     resultScore.innerText = finalScore;
-    resultCorrect.innerText = correctCount;
+    resultCorrect.innerText = correct;
     resultWrong.innerText = wrongCount;
     
     examReviewList.innerHTML = reviewHTML || '<p>Tuyệt vời, bạn không làm sai câu nào!</p>';
@@ -545,11 +559,13 @@ function submitExam() {
     
     // Gamification
     addXP(Math.round(parseFloat(finalScore) * 10));
-    if (parseFloat(finalScore) === 10) {
+    if (correct === currentQuestions.length) {
         unlockAchievement('immortal');
         triggerConfetti();
         playSound('victory');
     }
+    
+    saveQuestionStats();
     checkNightOwl();
 }
 
@@ -662,6 +678,9 @@ function renderStats() {
     for (const key in db.questions) {
         allQuestions.push(...db.questions[key]);
     }
+    for (const key in db.fe) {
+        allQuestions.push(...db.fe[key]);
+    }
     const totalQ = allQuestions.length;
     
     let totalAttempts = 0;
@@ -752,6 +771,9 @@ function exportMetadata() {
     const allQuestions = [];
     for (const key in db.questions) {
         allQuestions.push(...db.questions[key]);
+    }
+    for (const key in db.fe) {
+        allQuestions.push(...db.fe[key]);
     }
     
     for (const [qId, stat] of Object.entries(questionStats)) {
