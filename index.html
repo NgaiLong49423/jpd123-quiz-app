@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn Tập JPD123</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Marked.js for parsing Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-graduation-cap"></i> JPD123</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <h3>Hồ Sơ</h3>
+                    <a href="#" class="nav-item" data-view="profile" data-target="achievements">
+                        <i class="fa-solid fa-medal"></i> Hồ sơ thành tựu
+                    </a>
+                </div>
+                
+                <div class="nav-group">
+                    <h3>Lý Thuyết</h3>
+                    <a href="#" class="nav-item" data-view="theory" data-target="ly_thuyet">
+                        <i class="fa-solid fa-book"></i> Lý thuyết cơ bản
+                    </a>
+                    <a href="#" class="nav-item" data-view="theory" data-target="tu_han">
+                        <i class="fa-solid fa-language"></i> Từ Hán cần học
+                    </a>
+                    <a href="#" class="nav-item" data-view="theory" data-target="quy_tac">
+                        <i class="fa-solid fa-list-check"></i> Quy tắc học tập
+                    </a>
+                </div>
+                
+                <div class="nav-group">
+                    <h3>Trắc Nghiệm (Ôn Tập)</h3>
+                    <a href="#" class="nav-item" data-view="practice" data-target="all">
+                        <i class="fa-solid fa-shuffle"></i> Tổng hợp 203 câu
+                    </a>
+                    <a href="#" class="nav-item" data-view="practice" data-target="001_050">Câu 001 - 050</a>
+                    <a href="#" class="nav-item" data-view="practice" data-target="051_100">Câu 051 - 100</a>
+                    <a href="#" class="nav-item" data-view="practice" data-target="101_150">Câu 101 - 150</a>
+                    <a href="#" class="nav-item" data-view="practice" data-target="151_200">Câu 151 - 200</a>
+                    <a href="#" class="nav-item" data-view="practice" data-target="201_203">Câu 201 - 203</a>
+                </div>
+
+                <div class="nav-group">
+                    <h3>Thi Thử (FE)</h3>
+                    <a href="#" class="nav-item exam-mode" data-view="exam" data-target="FE_C2FE">
+                        <i class="fa-solid fa-stopwatch"></i> Đề SP26 C2FE
+                    </a>
+                    <a href="#" class="nav-item exam-mode" data-view="exam" data-target="FE_RE">
+                        <i class="fa-solid fa-stopwatch"></i> Đề SP26 RE
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="btn-icon">
+                    <i class="fa-solid fa-moon"></i> <span>Dark Mode</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <button id="mobile-menu-btn" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
+                <h1 id="page-title">Chào mừng bạn đến với JPD123</h1>
+                <div class="header-stats">
+                    <div class="level-badge" id="level-badge">Lv.1</div>
+                    <div class="xp-progress">
+                        <div class="xp-bar-bg">
+                            <div class="xp-bar-fill" id="xp-bar-fill"></div>
+                        </div>
+                        <div class="xp-text"><span id="current-xp">0</span> / <span id="next-level-xp">100</span> XP</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div id="content-area" class="content-container">
+                <!-- Theory View -->
+                <div id="theory-view" class="view-section hidden">
+                    <div class="markdown-body" id="theory-content"></div>
+                </div>
+
+                <!-- Practice/Exam View -->
+                <div id="quiz-view" class="view-section hidden">
+                    
+                    <div class="quiz-progress">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="quiz-progress-bar"></div>
+                        </div>
+                        <div class="progress-text">Câu <span id="current-q-idx">1</span> / <span id="total-q-count">50</span></div>
+                    </div>
+
+                    <!-- Exam Timer -->
+                    <div id="exam-timer-container" class="hidden">
+                        <i class="fa-solid fa-clock"></i> <span id="exam-timer">00:00</span>
+                    </div>
+
+                    <div class="question-container" id="question-container">
+                        <h2 class="question-title" id="q-title">Câu 1</h2>
+                        <div class="question-text" id="q-text"></div>
+                        
+                        <div class="options-grid" id="q-options">
+                            <!-- Options injected by JS -->
+                        </div>
+                        
+                        <!-- Feedback area (for practice mode) -->
+                        <div class="feedback-area hidden" id="q-feedback">
+                            <div class="feedback-icon" id="feedback-icon"></div>
+                            <div class="feedback-content">
+                                <h3 id="feedback-title">Chính xác!</h3>
+                                <div class="feedback-note" id="feedback-note"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quiz-controls">
+                        <button id="btn-prev" class="btn btn-secondary" disabled>Quay lại</button>
+                        <button id="btn-next" class="btn btn-primary" disabled>Kiểm tra</button>
+                        <button id="btn-submit-exam" class="btn btn-danger hidden">Nộp Bài</button>
+                    </div>
+                </div>
+
+                <!-- Exam Results View -->
+                <div id="result-view" class="view-section hidden">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <i class="fa-solid fa-trophy trophy-icon"></i>
+                            <h2>Kết Quả Thi Thử</h2>
+                        </div>
+                        <div class="score-circle">
+                            <div class="score-number" id="result-score">8.5</div>
+                            <div class="score-label">Điểm</div>
+                        </div>
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <i class="fa-solid fa-check text-success"></i>
+                                <span>Đúng: <strong id="result-correct">0</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fa-solid fa-xmark text-danger"></i>
+                                <span>Sai: <strong id="result-wrong">0</strong></span>
+                            </div>
+                        </div>
+                        <div class="result-actions">
+                            <button id="btn-review-exam" class="btn btn-primary">Xem chi tiết bài làm</button>
+                            <button id="btn-retry-exam" class="btn btn-secondary">Làm lại</button>
+                        </div>
+                    </div>
+                    
+                    <div id="exam-review-container" class="hidden">
+                        <h3>Chi tiết các câu sai</h3>
+                        <div id="exam-review-list"></div>
+                    </div>
+                </div>
+                
+                <!-- Profile / Achievements View -->
+                <div id="profile-view" class="view-section hidden">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fa-solid fa-user-ninja"></i>
+                        </div>
+                        <div class="profile-info">
+                            <h2 id="profile-title">Tân Binh Hiragana</h2>
+                            <p>Cấp độ hiện tại: <strong id="profile-level">1</strong></p>
+                            <p>Tổng XP: <strong id="profile-total-xp">0</strong></p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="achievements-title">Huy hiệu thành tựu</h3>
+                    <div class="achievements-grid" id="achievements-grid">
+                        <!-- Achievements will be injected by JS -->
+                    </div>
+                    
+                    <div class="settings-section" style="margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 20px;">
+                        <h3 class="achievements-title"><i class="fa-solid fa-gear"></i> Cài đặt Gia Sư AI</h3>
+                        <div style="margin-top: 15px;">
+                            <label for="notebook-url" style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">
+                                Đường dẫn (URL) Gemini Notebook của bạn:
+                            </label>
+                            <input type="text" id="notebook-url" class="search-input" style="width: 100%; max-width: 600px; padding: 12px; border-radius: 8px; border: 2px solid var(--border-color); background: var(--bg-card); color: var(--text-main);" placeholder="https://gemini.google.com/notebook/...">
+                            <button class="btn btn-secondary" onclick="saveNotebookUrl()" style="margin-top: 10px;">Lưu đường dẫn</button>
+                            <p id="notebook-url-msg" style="color: var(--success); font-size: 0.85rem; margin-top: 8px; display: none;">Đã lưu đường dẫn thành công!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Welcome View -->
+                <div id="welcome-view" class="view-section">
+                    <div class="welcome-card">
+                        <img src="https://cdn-icons-png.flaticon.com/512/5300/5300705.png" alt="Learn Japanese" class="welcome-img">
+                        <h2>Sẵn sàng chinh phục JPD123?</h2>
+                        <p>Chọn một bài lý thuyết hoặc bộ đề trắc nghiệm ở menu bên trái để bắt đầu học nhé!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Data script -->
+    <script src="data.js"></script>
+    <!-- App script -->
+    <script src="app.js"></script>
+</body>
+</html>
